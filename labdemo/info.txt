@@ -1,0 +1,10 @@
+bool = в нем находится логическое выражение (should)
+should = ИЛИ (at least one)
+boost = приоритет, чем больше тем выше приоритет
+fuziness = AUTO, лимит на кол-во ошибок в поиске( в исковом слове)
+
+@classmehtod = static method = метод не одного объекта, а всех объектов (метод класса)
+
+django ORM = Object Related Model
+objects.filtet(...)
+

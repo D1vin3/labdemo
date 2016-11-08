@@ -1,5 +1,7 @@
 from django.contrib.gis import geos
 from django.contrib.gis.db import models
+from labdemo.settings import ES_CLIENT
+import json
 
 
 es_mappings = {
@@ -83,8 +85,82 @@ class kazpost(models.Model):
     def get_es_type(cls):
         return model_es_indices[cls.__name__]['type']
 
+    @classmethod
+    def es_search(cls, term, srch_fields=['region', 'area', 'locality', 'district', 'street', 'house']):
+        es = ES_CLIENT
+        query = cls.gen_query(term, srch_fields)
+        print json.dumps(query, ensure_ascii=False)
+        recs = []
+        res = es.search(index=cls.get_es_index(), doc_type=cls.get_es_type(), body=query)
+        if res['hits']['total'] > 0:
+            print 'found %s' % res['hits']['total']
+            ids = [
+                c['_id'] for c in res['hits']['hits']
+                ]
+            clauses = ' '.join(['WHEN id=%s THEN %s' % (pk, i) for i, pk in enumerate(ids)])
+            ordering = 'CASE %s END' % clauses
+            recs = cls.objects.filter(id__in=ids).extra(select={'ordering': ordering}, order_by=('ordering',))
+            print recs[0]
+ 
+        return recs
 
 
+
+    @classmethod
+    def gen_query(cls, term, srch_fields):
+        val = term
+        query = {
+            "query": {
+                "filtered": {
+                    "query": {
+                        "bool": {
+                            "should": [
+                                { "multi_match": {
+                                    "type": "cross_fields",
+                                    "fields": ["locality"],
+                                    "fuzziness": "AUTO",
+                                    "query": term,
+                                    "boost": 10
+                                } },
+                                { "multi_match": {
+                                    "type": "cross_fields",
+                                    "fields": ["street", "district"],
+                                    "fuzziness": "AUTO",
+                                    "query": term,
+                                    "boost": 5
+                                } },
+                                { "multi_match": {
+                                    "type": "cross_fields",
+                                    "fields": ["house"],
+                                    "query": term
+                                } }
+                            ]
+                        }
+                    }
+                }
+            },
+            "size": 10,
+        }
+        return json.dumps(query)
+
+
+model_es_indices = {
+    "kazpost": {
+        'index_name': "labdemo",
+        "type": "kazpost"
+    }
+}
+ 
+fields_weights = {
+    'locality': 5,
+    'street': 3,
+    'house': 2
+}
+fuzzy_fields_weights = {
+    'locality': 1,
+    'street': 1,
+    'house': 1
+}
 
 
 
