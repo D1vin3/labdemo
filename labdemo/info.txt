@@ -4,7 +4,12 @@ boost = приоритет, чем больше тем выше приорите
 fuziness = AUTO, лимит на кол-во ошибок в поиске( в исковом слове)
 
 @classmehtod = static method = метод не одного объекта, а всех объектов (метод класса)
+self. = принадлежит инстансу
 
 django ORM = Object Related Model
 objects.filtet(...)
 
+polimorphism = свойство одной функции работать с разными типами данных
+
+
+https://habrahabr.ru/company/smartprogress/blog/312726/
